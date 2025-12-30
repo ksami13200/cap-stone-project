@@ -1,0 +1,34 @@
+services:
+  backend:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DB=ourplant_db
+    depends_on:
+      - db
+
+  db:
+    build: ./db
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=ourplant_db
+    volumes:
+      - db_data:/var/lib/mysql
+
+  frontend:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    volumes:
+      - ./static:/app/static
+
+volumes:
+  db_data:

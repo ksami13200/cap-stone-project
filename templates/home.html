@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Bring Nature Indoors</h1>
+    <p>Discover our curated collection of indoor plants for the modern urban home.</p>
+    <br>
+    <a href="{{ url_for('shop') }}" class="btn">Shop Now</a>
+</div>
+
+<div class="featured-section" style="margin-top: 4rem;">
+    <h2>Why Our Plants?</h2>
+    <div class="card-grid">
+        <div class="card">
+            <h3>Organically Grown</h3>
+            <p>All our plants are grown without harmful pesticides.</p>
+        </div>
+        <div class="card">
+            <h3>Expertly Curated</h3>
+            <p>Selected for their beauty and resilience indoors.</p>
+        </div>
+        <div class="card">
+            <h3>Doorstep Delivery</h3>
+            <p>Carefully packaged and delivered to your door.</p>
+        </div>
+    </div>
+</div>
+
+<div class="testimonials" style="margin-top: 4rem;">
+    <h2>What Our Customers Say</h2>
+    {% if testimonials %}
+    <div class="card-grid">
+        {% for t in testimonials %}
+        <div class="card">
+            <p>"{{ t.content }}"</p>
+            <p><strong>- {{ t.customer_name }}</strong></p>
+            <p>Rating: {{ t.rating }}/5</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No testimonials yet. Be the first!</p>
+    {% endif %}
+</div>
+{% endblock %}

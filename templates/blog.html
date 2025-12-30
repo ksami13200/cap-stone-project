@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Blog{% endblock %}
+
+{% block content %}
+<div class="blog-header">
+    <h1>Plant Care Blog</h1>
+    <p>Tips, tricks, and stories from our plant experts.</p>
+</div>
+
+{% if posts %}
+<div class="blog-list" style="max-width: 800px; margin: 0 auto; margin-top: 2rem;">
+    {% for post in posts %}
+    <article style="margin-bottom: 3rem; border-bottom: 1px solid #eee; padding-bottom: 2rem;">
+        <h2>{{ post.title }}</h2>
+        <p class="meta" style="color: #666; font-size: 0.9rem;">Posted on {{ post.date_posted }}</p>
+        <div class="content" style="margin-top: 1rem;">
+            {{ post.content | truncate(200) }}
+        </div>
+        <a href="#" style="color: var(--primary-color); font-weight: 600;">Read More</a>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<p>No blog posts yet.</p>
+{% endif %}
+{% endblock %}
