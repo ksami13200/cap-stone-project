@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "testing" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "testing" ]
 
 jobs:
   lint:
@@ -27,9 +27,24 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-  build:
+  build-and-push:
     needs: lint
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: backend
+            context: .
+            file: ./Dockerfile
+            image: ourplant-backend
+          - service: frontend
+            context: .
+            file: ./nginx/Dockerfile
+            image: ourplant-frontend
+          - service: database
+            context: ./db
+            file: ./db/Dockerfile
+            image: ourplant-db
     steps:
     - uses: actions/checkout@v3
     
@@ -42,12 +57,13 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
         
-    - name: Build and push
+    - name: Build and push ${{ matrix.service }}
       uses: docker/build-push-action@v4
       with:
-        context: .
-        file: ./Dockerfile
+        context: ${{ matrix.context }}
+        file: ${{ matrix.file }}
         push: true
         tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/ourplant-app:latest
-          ${{ secrets.DOCKERHUB_USERNAME }}/ourplant-app:${{ github.sha }}
+          ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest
+          ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+
