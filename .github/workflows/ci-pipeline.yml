@@ -22,7 +22,7 @@ jobs :
                  SONAR_TOKEN : ${{ secrets.SONAR_TOKEN }}
               with :
                  args: >
-                    -Dsonar.projectKey=ksami13200_cap-stone-project
+                    -Dsonar.projectKey=ksami13200_cap-stone-project2
                     -Dsonar.organization=ksami13200
                     -Dsonar.sources=.
                     -X
