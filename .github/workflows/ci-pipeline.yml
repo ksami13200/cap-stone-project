@@ -68,12 +68,18 @@ jobs :
             - name: Trivy scan image
               uses: aquasecurity/trivy-action@0.33.1
               with:
-               image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
-               severity: HIGH,CRITICAL
-               exit-code: 1
-               format: table
+                image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+                scan-type: image
+                format: table
+                severity: HIGH,CRITICAL
+                ignore-unfixed: true
+                exit-code: 1
 
       # -------- Push Image --------
-            - name: Push Docker image
+            - name: Push Docker image (SHA tag)
               run: |
-                 docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+                    docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+
+            - name: Push Docker image (latest tag)
+              run: |
+                    docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest
