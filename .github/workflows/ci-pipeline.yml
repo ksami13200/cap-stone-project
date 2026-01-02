@@ -34,6 +34,9 @@ jobs :
         run: |
             PROJECT_KEY="ksami13200_cap-stone-project2"
             AUTH="${{ secrets.SONAR_TOKEN }}:"
+
+            mkdir -p sonar-reports
+
             echo "SonarCloud Summary Report" > sonar-reports/summary.txt
             echo "=========================" >> sonar-reports/summary.txt
             echo "" >> sonar-reports/summary.txt
