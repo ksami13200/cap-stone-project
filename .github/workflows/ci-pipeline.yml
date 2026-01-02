@@ -26,6 +26,17 @@ jobs :
                       -Dsonar.organization=ksami13200
                       -Dsonar.sources=.
                       -Dsonar.userHome=./.sonar-output
+              
+            - name: Export SonarCloud Report
+              run: |
+                  mkdir -p reports
+
+                  curl -s -u ${{ secrets.SONAR_TOKEN }}: \
+                  "https://sonarcloud.io/api/measures/component?component=YOUR_PROJECT_KEY&metricKeys=bugs,vulnerabilities,code_smells,coverage,security_hotspots" \
+                    | jq '.' > reports/sonar-report.json
+
+                  echo "SonarCloud Report:" > reports/sonar-report.txt
+                  cat reports/sonar-report.json >> reports/sonar-report.txt
 
 
     docker-build-and-push :
@@ -79,6 +90,12 @@ jobs :
                 severity: CRITICAL
                 ignore-unfixed: true
                 exit-code: 1
+
+            - name: Upload Reports
+              uses: actions/upload-artifact@v4
+              with:
+                  name: security-quality-reports
+                  path: reports/
 
       # -------- Push Image --------
             - name: Push Docker image (SHA tag)
