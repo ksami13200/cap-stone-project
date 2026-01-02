@@ -87,28 +87,12 @@ jobs :
             - name: Trivy scan image
               uses: aquasecurity/trivy-action@0.33.1
               with:
-                  image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
-                  scan-type: image
-                  format: table
-                  output: reports/trivy-${{ matrix.image }}.txt
-                  severity: CRITICAL
-                  ignore-unfixed: true
-
-            - name: Commit & Push reports to repo
-              run: |
-                  git config user.name "github-actions"
-                  git config user.email "github-actions@github.com"
-
-                  git add reports/
-
-                  if git diff --cached --quiet; then
-                    echo "No changes to commit"
-                  else
-                    git commit -m "ci: add security & quality reports [skip ci]"
-                    git push origin testing
-                  fi
-
-
+                image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+                scan-type: image
+                format: table
+                severity: CRITICAL
+                ignore-unfixed: true
+                exit-code: 1
 
       # -------- Push Image --------
             - name: Push Docker image (SHA tag)
