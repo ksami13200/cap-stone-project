@@ -117,6 +117,14 @@ jobs :
                         > reports/trivy/${{ matrix.service }}.txt
 
 
+            - name: Upload Reports
+              uses: actions/upload-artifact@v4
+              with:
+                  name: reports-${{ matrix.service }}
+                  path: reports/
+
+
+
       # -------- Push Image --------
             - name: Push Docker image (SHA tag)
               run: |
