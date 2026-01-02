@@ -1,0 +1,89 @@
+name : ci pipeline
+on : 
+    push :
+
+        branches : 
+            - testing
+           
+    pull_request :
+        branches : 
+            - testing
+
+jobs :
+    codelevel :
+        runs-on : ubuntu-latest
+        steps :
+            - name : Checkout code
+              uses : actions/checkout@v4
+                # sonar-qube scan 
+            - name: SonarCloud Scan
+              uses: SonarSource/sonarcloud-github-action@v2
+              env:
+                 SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+              with:
+                 args: >
+                      -Dsonar.projectKey=Abdelrazek97_cap-stone-project
+                      -Dsonar.organization=abdelrazek97
+                      -Dsonar.sources=.
+
+
+    docker-build-and-push :
+        runs-on : ubuntu-latest
+        needs : codelevel
+        strategy:
+            matrix:
+              include:
+                - service: backend
+                  context: .
+                  file: ./Dockerfile
+                  image: ourplant-backend
+                - service: frontend
+                  context: .
+                  file: ./nginx/Dockerfile
+                  image: ourplant-frontend
+                - service: database
+                  context: ./db
+                  file: ./db/Dockerfile
+                  image: ourplant-db
+        steps :
+            - name : Checkout code
+              uses : actions/checkout@v4
+
+            - name : login to dockerhub
+              uses: docker/login-action@v3
+              with:
+                username: ${{ secrets.DOCKERHUB_USERNAME }}
+                password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # -------- Docker Build --------
+             # -------- Build Image --------
+            - name: Build Docker image
+              run: |
+                  docker build \
+                  -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }} \
+                  -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest \
+                  -f ${{ matrix.file }} \
+                  ${{ matrix.context }}
+
+                        
+                 
+
+      # -------- Trivy Scan --------
+            - name: Trivy scan image
+              uses: aquasecurity/trivy-action@0.33.1
+              with:
+                image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+                scan-type: image
+                format: table
+                severity: CRITICAL
+                ignore-unfixed: true
+                exit-code: 1
+
+      # -------- Push Image --------
+            - name: Push Docker image (SHA tag)
+              run: |
+                    docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+
+            - name: Push Docker image (latest tag)
+              run: |
+                    docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest
