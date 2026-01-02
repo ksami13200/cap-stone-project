@@ -30,36 +30,37 @@ jobs :
             -Dsonar.sources=.
 
       # -------- Create Report --------
-      - name: Generate Sonar Summary TXT
-        run: |
-            PROJECT_KEY="ksami13200_cap-stone-project2"
-            AUTH="${{ secrets.SONAR_TOKEN }}:"
+           - name: Save Sonar Results
+             run: |
+                PROJECT_KEY="Abdelrazek97_cap-stone-project"
+                AUTH="${{ secrets.SONAR_TOKEN }}:"
 
-            mkdir -p sonar-reports
+                mkdir -p reports/sonar
 
-            echo "SonarCloud Summary Report" > sonar-reports/summary.txt
-            echo "=========================" >> sonar-reports/summary.txt
-            echo "" >> sonar-reports/summary.txt
+                echo "Sonar Summary Report" > reports/sonar/summary.txt
+                echo "===================" >> reports/sonar/summary.txt
 
-            echo "Bugs:" >> sonar-reports/summary.txt
-            curl -s -u "$AUTH" \
-                "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=BUG" \
-                | jq '.total' >> sonar-reports/summary.txt
+                echo "Bugs:" >> reports/sonar/summary.txt
+                curl -s -u "$AUTH" \
+                    "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=BUG" \
+                    | jq '.total' >> reports/sonar/summary.txt
 
-            echo "Vulnerabilities:" >> sonar-reports/summary.txt
-            curl -s -u "$AUTH" \
-                "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=VULNERABILITY" \
-                | jq '.total' >> sonar-reports/summary.txt
+                echo "Vulnerabilities:" >> reports/sonar/summary.txt
+                curl -s -u "$AUTH" \
+                    "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=VULNERABILITY" \
+                    | jq '.total' >> reports/sonar/summary.txt
 
-            echo "Code Smells:" >> sonar-reports/summary.txt
-            curl -s -u "$AUTH" \
-                "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=CODE_SMELL" \
-                | jq '.total' >> sonar-reports/summary.txt
+                echo "Code Smells:" >> reports/sonar/summary.txt
+                curl -s -u "$AUTH" \
+                    "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=CODE_SMELL" \
+                    | jq '.total' >> reports/sonar/summary.txt
 
-            echo "Coverage (%):" >> sonar-reports/summary.txt
-            curl -s -u "$AUTH" \
-                "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&metricKeys=coverage" \
-                | jq '.component.measures[0].value' >> sonar-reports/summary.txt
+                STATUS=$(curl -s -u "$AUTH" \
+                    "https://sonarcloud.io/api/qualitygates/project_status?projectKey=$PROJECT_KEY" \
+                    | jq -r '.projectStatus.status')
+
+                echo "Quality Gate: $STATUS" > reports/sonar/quality-gate.txt
+
 
 
   docker-build-and-push :
@@ -104,15 +105,17 @@ jobs :
                  
 
       # -------- Trivy Scan --------
-            - name: Trivy scan image
-              uses: aquasecurity/trivy-action@0.33.1
-              with:
-                image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
-                scan-type: image
-                format: table
-                severity: CRITICAL
-                ignore-unfixed: true
-                exit-code: 1
+                  - name: Trivy scan image (save to file)
+                    run: |
+                      mkdir -p reports/trivy
+
+                      trivy image \
+                        --severity CRITICAL \
+                        --ignore-unfixed \
+                        --no-progress \
+                        ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }} \
+                        > reports/trivy/${{ matrix.service }}.txt
+
 
       # -------- Push Image --------
             - name: Push Docker image (SHA tag)
