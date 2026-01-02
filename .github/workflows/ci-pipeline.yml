@@ -30,8 +30,8 @@ jobs :
             -Dsonar.sources=.
 
       # -------- Create Report --------
-           - name: Save Sonar Results
-             run: |
+      - name: Save Sonar Results
+        run: |
                 PROJECT_KEY="Abdelrazek97_cap-stone-project"
                 AUTH="${{ secrets.SONAR_TOKEN }}:"
 
@@ -105,8 +105,8 @@ jobs :
                  
 
       # -------- Trivy Scan --------
-                  - name: Trivy scan image (save to file)
-                    run: |
+            - name: Trivy scan image (save to file)
+              run: |
                       mkdir -p reports/trivy
 
                       trivy image \
