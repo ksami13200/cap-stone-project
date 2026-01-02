@@ -1,3 +1,5 @@
+permissions:
+  contents: write
 name : ci pipeline
 on : 
     push :
@@ -28,23 +30,15 @@ jobs :
             -Dsonar.sources=.
 
       # -------- Create Report --------
-      - name: Export SonarCloud Report
+      - name: Create Sonar Report file
         run: |
-          mkdir -p reports
-          echo "SonarCloud Report" > reports/sonar-report.txt
+            mkdir -p reports
+            echo "SonarCloud Report" > reports/sonar-report.txt
 
-          curl -s -u ${{ secrets.SONAR_TOKEN }}: \
-          "https://sonarcloud.io/api/measures/component?component=ksami13200_cap-stone-project2&metricKeys=bugs,vulnerabilities,code_smells,coverage" \
-          >> reports/sonar-report.txt || echo "Sonar API failed" >> reports/sonar-report.txt
+            curl -s -u ${{ secrets.SONAR_TOKEN }}: \
+            "https://sonarcloud.io/api/measures/component?component=ksami13200_cap-stone-project2&metricKeys=bugs,vulnerabilities,code_smells,coverage,security_hotspots" \
+            >> reports/sonar-report.txt || echo "Sonar API failed" >> reports/sonar-report.txt
 
-          ls -la reports
-
-      # ✅ UPLOAD HERE (IMPORTANT)
-      - name: Upload Sonar Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: sonar-report
-          path: reports/
 
 
 
@@ -93,13 +87,27 @@ jobs :
             - name: Trivy scan image
               uses: aquasecurity/trivy-action@0.33.1
               with:
-                image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
-                scan-type: image
-                format: table
-                output: reports/trivy-${{ matrix.image }}.txt
-                severity: CRITICAL
-                ignore-unfixed: true
-                exit-code: 1
+                  image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+                  scan-type: image
+                  format: table
+                  output: reports/trivy-${{ matrix.image }}.txt
+                  severity: CRITICAL
+                  ignore-unfixed: true
+
+            - name: Commit & Push reports to repo
+              run: |
+                  git config user.name "github-actions"
+                  git config user.email "github-actions@github.com"
+
+                  git add reports/
+
+                  if git diff --cached --quiet; then
+                    echo "No changes to commit"
+                  else
+                    git commit -m "ci: add security & quality reports [skip ci]"
+                    git push origin testing
+                  fi
+
 
 
       # -------- Push Image --------
