@@ -30,40 +30,33 @@ jobs :
             -Dsonar.sources=.
 
       # -------- Create Report --------
-      - name: Create Sonar Reports Directory
-        run: |
-            mkdir -p sonar-reports
-            
-      - name: Export SonarCloud Reports
+      - name: Generate Sonar Summary TXT
         run: |
             PROJECT_KEY="ksami13200_cap-stone-project2"
             AUTH="${{ secrets.SONAR_TOKEN }}:"
+            echo "SonarCloud Summary Report" > sonar-reports/summary.txt
+            echo "=========================" >> sonar-reports/summary.txt
+            echo "" >> sonar-reports/summary.txt
 
+            echo "Bugs:" >> sonar-reports/summary.txt
             curl -s -u "$AUTH" \
-            "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=BUG" \
-            > sonar-reports/bugs.json
+                "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=BUG" \
+                | jq '.total' >> sonar-reports/summary.txt
 
+            echo "Vulnerabilities:" >> sonar-reports/summary.txt
             curl -s -u "$AUTH" \
-            "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=VULNERABILITY" \
-            > sonar-reports/vulnerabilities.json
+                "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=VULNERABILITY" \
+                | jq '.total' >> sonar-reports/summary.txt
 
+            echo "Code Smells:" >> sonar-reports/summary.txt
             curl -s -u "$AUTH" \
-            "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=CODE_SMELL" \
-            > sonar-reports/code_smells.json
+                "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=CODE_SMELL" \
+                | jq '.total' >> sonar-reports/summary.txt
 
+            echo "Coverage (%):" >> sonar-reports/summary.txt
             curl -s -u "$AUTH" \
-            "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&metricKeys=coverage" \
-            > sonar-reports/coverage.json
-
-            curl -s -u "$AUTH" \
-            "https://sonarcloud.io/api/hotspots/search?projectKey=$PROJECT_KEY" \
-            > sonar-reports/security_hotspots.json
-
-      - name: Upload Sonar Reports
-        uses: actions/upload-artifact@v4
-        with:
-            name: sonar-reports
-            path: sonar-reports/
+                "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&metricKeys=coverage" \
+                | jq '.component.measures[0].value' >> sonar-reports/summary.txt
 
 
   docker-build-and-push :
