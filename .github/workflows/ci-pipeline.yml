@@ -30,16 +30,40 @@ jobs :
             -Dsonar.sources=.
 
       # -------- Create Report --------
-      - name: Create Sonar Report file
+      - name: Create Sonar Reports Directory
         run: |
-            mkdir -p reports
-            echo "SonarCloud Report" > reports/sonar-report.txt
+            mkdir -p sonar-reports
+            
+      - name: Export SonarCloud Reports
+        run: |
+            PROJECT_KEY="ksami13200_cap-stone-project2"
+            AUTH="${{ secrets.SONAR_TOKEN }}:"
 
-            curl -s -u ${{ secrets.SONAR_TOKEN }}: \
-            "https://sonarcloud.io/api/measures/component?component=ksami13200_cap-stone-project2&metricKeys=bugs,vulnerabilities,code_smells,coverage,security_hotspots" \
-            >> reports/sonar-report.txt || echo "Sonar API failed" >> reports/sonar-report.txt
+            curl -s -u "$AUTH" \
+            "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=BUG" \
+            > sonar-reports/bugs.json
 
+            curl -s -u "$AUTH" \
+            "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=VULNERABILITY" \
+            > sonar-reports/vulnerabilities.json
 
+            curl -s -u "$AUTH" \
+            "https://sonarcloud.io/api/issues/search?componentKeys=$PROJECT_KEY&types=CODE_SMELL" \
+            > sonar-reports/code_smells.json
+
+            curl -s -u "$AUTH" \
+            "https://sonarcloud.io/api/measures/component?component=$PROJECT_KEY&metricKeys=coverage" \
+            > sonar-reports/coverage.json
+
+            curl -s -u "$AUTH" \
+            "https://sonarcloud.io/api/hotspots/search?projectKey=$PROJECT_KEY" \
+            > sonar-reports/security_hotspots.json
+
+      - name: Upload Sonar Reports
+        uses: actions/upload-artifact@v4
+        with:
+            name: sonar-reports
+            path: sonar-reports/
 
 
   docker-build-and-push :
