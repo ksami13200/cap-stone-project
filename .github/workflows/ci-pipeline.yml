@@ -10,40 +10,43 @@ on :
             - testing
 
 jobs :
-    codelevel :
-        runs-on : ubuntu-latest
-        steps :
-            - name : Checkout code
-              uses : actions/checkout@v4
-                # sonar-qube scan 
-            - name: SonarCloud Scan
-              uses: SonarSource/sonarcloud-github-action@v2
-              env:
-                 SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-              with:
-                 args: >
-                      -Dsonar.projectKey=ksami13200_cap-stone-project2
-                      -Dsonar.organization=ksami13200
-                      -Dsonar.sources=.
-                      -Dsonar.userHome=./.sonar-output
-              
-            - name: Export SonarCloud Report
-              run: |
-                  mkdir -p reports
-                  echo "SonarCloud Report" > reports/sonar-report.txt
+  
+  codelevel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-                  curl -s -u ${{ secrets.SONAR_TOKEN }}: \
-                  "https://sonarcloud.io/api/measures/component?component=ksami13200_cap-stone-project2&metricKeys=bugs,vulnerabilities,code_smells,coverage" \
-                  >> reports/sonar-report.txt || echo "Sonar API failed" >> reports/sonar-report.txt
+      # -------- SonarCloud --------
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=ksami13200_cap-stone-project2
+            -Dsonar.organization=ksami13200
+            -Dsonar.sources=.
 
-                  ls -la reports
+      # -------- Create Report --------
+      - name: Export SonarCloud Report
+        run: |
+          mkdir -p reports
+          echo "SonarCloud Report" > reports/sonar-report.txt
 
-        # ✅ UPLOAD HERE (IMPORTANT)
-            - name: Upload Sonar Report
-              uses: actions/upload-artifact@v4
-              with:
-                 name: sonar-report
-                 path: reports/
+          curl -s -u ${{ secrets.SONAR_TOKEN }}: \
+          "https://sonarcloud.io/api/measures/component?component=ksami13200_cap-stone-project2&metricKeys=bugs,vulnerabilities,code_smells,coverage" \
+          >> reports/sonar-report.txt || echo "Sonar API failed" >> reports/sonar-report.txt
+
+          ls -la reports
+
+      # ✅ UPLOAD HERE (IMPORTANT)
+      - name: Upload Sonar Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-report
+          path: reports/
+
+
 
     docker-build-and-push :
         runs-on : ubuntu-latest
