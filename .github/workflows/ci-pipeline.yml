@@ -30,14 +30,20 @@ jobs :
             - name: Export SonarCloud Report
               run: |
                   mkdir -p reports
+                  echo "SonarCloud Report" > reports/sonar-report.txt
 
                   curl -s -u ${{ secrets.SONAR_TOKEN }}: \
-                  "https://sonarcloud.io/api/measures/component?component=YOUR_PROJECT_KEY&metricKeys=bugs,vulnerabilities,code_smells,coverage,security_hotspots" \
-                    | jq '.' > reports/sonar-report.json
+                  "https://sonarcloud.io/api/measures/component?component=ksami13200_cap-stone-project2&metricKeys=bugs,vulnerabilities,code_smells,coverage" \
+                  >> reports/sonar-report.txt || echo "Sonar API failed" >> reports/sonar-report.txt
 
-                  echo "SonarCloud Report:" > reports/sonar-report.txt
-                  cat reports/sonar-report.json >> reports/sonar-report.txt
+                  ls -la reports
 
+        # ✅ UPLOAD HERE (IMPORTANT)
+            - name: Upload Sonar Report
+              uses: actions/upload-artifact@v4
+              with:
+                 name: sonar-report
+                 path: reports/
 
     docker-build-and-push :
         runs-on : ubuntu-latest
@@ -87,15 +93,11 @@ jobs :
                 image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
                 scan-type: image
                 format: table
+                output: reports/trivy-${{ matrix.image }}.txt
                 severity: CRITICAL
                 ignore-unfixed: true
                 exit-code: 1
 
-            - name: Upload Reports
-              uses: actions/upload-artifact@v4
-              with:
-                  name: security-quality-reports
-                  path: reports/
 
       # -------- Push Image --------
             - name: Push Docker image (SHA tag)
