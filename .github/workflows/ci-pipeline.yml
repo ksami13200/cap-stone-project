@@ -19,8 +19,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-                  -Dsonar.projectKey=ksami13200_cap-stone-project
-                  -Dsonar.organization=ksami13200
+                  -Dsonar.projectKey=Abdelrazek97_cap-stone-project
+                  -Dsonar.organization=abdelrazek97
                   -Dsonar.sources=.
       - name: Fetch Sonar Metrics
         run: |
