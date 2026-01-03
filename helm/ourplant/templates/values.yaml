@@ -9,7 +9,7 @@ global:
 backend:
   image:
     repository: abdlerazek/ourplant-backend
-    tag: latest
+    tag: 97cfa611ffdd82b1ab6edc3e319c3c23d6bb7d40
     pullPolicy: IfNotPresent
 
   replicaCount: 1
@@ -39,7 +39,7 @@ backend:
 frontend:
   image:
     repository: abdlerazek/ourplant-frontend
-    tag: latest
+    tag: 97cfa611ffdd82b1ab6edc3e319c3c23d6bb7d40
     pullPolicy: IfNotPresent
 
   replicaCount: 1
@@ -79,7 +79,7 @@ ingress:
 mysql:
   image:
     repository: abdlerazek/ourplant-db
-    tag: latest
+    tag: 97cfa611ffdd82b1ab6edc3e319c3c23d6bb7d40
     pullPolicy: IfNotPresent
 
   replicaCount: 1
