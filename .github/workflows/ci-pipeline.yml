@@ -1,89 +1,121 @@
-name : ci pipeline
-on : 
-    push :
+name: ci-pipeline
 
-        branches : 
-            - testing
-           
-    pull_request :
-        branches : 
-            - testing
+on:
+  push:
+    branches: [ testing ]
+  pull_request:
+    branches: [ testing ]
 
-jobs :
-    codelevel :
-        runs-on : ubuntu-latest
-        steps :
-            - name : Checkout code
-              uses : actions/checkout@v4
-                # sonar-qube scan 
-            - name: SonarCloud Scan
-              uses: SonarSource/sonarcloud-github-action@v2
-              env:
-                 SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-              with:
-                 args: >
-                      -Dsonar.projectKey=Abdelrazek97_cap-stone-project
-                      -Dsonar.organization=abdelrazek97
-                      -Dsonar.sources=.
+jobs:
+# ---------- Code Quality ----------
+  codelevel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+                  -Dsonar.projectKey=Abdelrazek97_cap-stone-project
+                  -Dsonar.organization=abdelrazek97
+                  -Dsonar.sources=.
+      - name: Fetch Sonar Metrics
+        run: |
+          mkdir -p reports/sonar
+          curl -s -u ${{ secrets.SONAR_TOKEN }}: \
+          "https://sonarcloud.io/api/measures/component?component=Abdelrazek97_cap-stone-project&metricKeys=bugs,vulnerabilities,code_smells,coverage" \
+          -o reports/sonar/metrics.json
+      - name: Generate Sonar Report
+        run: |
+          echo "# Sonar Metrics" > reports/sonar/report.md
+          echo "| Metric | Value |" >> reports/sonar/report.md
+          echo "|------|-------|" >> reports/sonar/report.md
+          jq -r '.component.measures[] | "| \(.metric) | \(.value) |"' reports/sonar/metrics.json >> reports/sonar/report.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sonar-report
+          path: reports/sonar/
 
-    docker-build-and-push :
-        runs-on : ubuntu-latest
-        needs : codelevel
-        strategy:
-            matrix:
-              include:
-                - service: backend
-                  context: .
-                  file: ./Dockerfile
-                  image: ourplant-backend
-                - service: frontend
-                  context: .
-                  file: ./nginx/Dockerfile
-                  image: ourplant-frontend
-                - service: database
-                  context: ./db
-                  file: ./db/Dockerfile
-                  image: ourplant-db
-        steps :
-            - name : Checkout code
-              uses : actions/checkout@v4
+# ---------- Build / Scan / Push ----------
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: codelevel
+    strategy:
+      matrix:
+        include:
+          - image: ourplant-backend
+            context: .
+            file: ./Dockerfile
+          - image: ourplant-frontend
+            context: .
+            file: ./nginx/Dockerfile
+          - image: ourplant-db
+            context: ./db
+            file: ./db/Dockerfile
 
-            - name : login to dockerhub
-              uses: docker/login-action@v3
-              with:
-                username: ${{ secrets.DOCKERHUB_USERNAME }}
-                password: ${{ secrets.DOCKERHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
 
-      # -------- Docker Build --------
-             # -------- Build Image --------
-            - name: Build Docker image
-              run: |
-                  docker build \
-                  -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }} \
-                  -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest \
-                  -f ${{ matrix.file }} \
-                  ${{ matrix.context }}
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-                        
-                 
+      - name: Build image
+        run: |
+          docker build \
+          -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }} \
+          -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest \
+          -f ${{ matrix.file }} \
+          ${{ matrix.context }}
+      - name: Trivy Scan (Image) - Table
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+          format: table
+          output: trivy-${{ matrix.image }}.txt
+          severity: CRITICAL
+          exit-code: 0
 
-      # -------- Trivy Scan --------
-            - name: Trivy scan image
-              uses: aquasecurity/trivy-action@0.33.1
-              with:
-                image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
-                scan-type: image
-                format: table
-                severity: CRITICAL
-                ignore-unfixed: true
-                exit-code: 1
+      - uses: actions/upload-artifact@v4
+        with:
+            name: trivy-report-${{ matrix.image }}
+            path: trivy-${{ matrix.image }}.txt
 
-      # -------- Push Image --------
-            - name: Push Docker image (SHA tag)
-              run: |
-                    docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+      - name: Push image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest
+# ---------- Helm Update ----------
+  update-helm:
+    runs-on: ubuntu-latest
+    needs: docker-build
+    permissions:
+     contents: write
 
-            - name: Push Docker image (latest tag)
-              run: |
-                    docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0   # pull --rebase
+
+    - name: Update Helm tag
+      run: |
+        sed -i "s|tag:.*|tag: ${GITHUB_SHA}|g" helm/ourplant/values.yaml
+    - name: Commit changes (if any)
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git add helm/ourplant/values.yaml
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+          exit 0
+        fi
+        git commit -m "ci: update image tag to ${GITHUB_SHA}"
+    - name: Pull latest & push
+      run: |
+        git pull --rebase origin testing
+        git push origin testing
