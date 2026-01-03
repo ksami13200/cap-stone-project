@@ -1,14 +1,13 @@
+{{- if .Values.mysql.limits }}
 apiVersion: v1
 kind: LimitRange
 metadata:
-  name: {{ .Release.Name }}
-  namespace: {{ .Values.mysql.namespace }}
+  name: mysql-limits
 spec:
   limits:
-    - type: {{ .Values.mysql.limits.type }}
-      default:
-        cpu: {{ .Values.mysql.limits.default.cpu }}
-        memory: {{ .Values.mysql.limits.default.memory }}
-      defaultRequest:
-        cpu: {{ .Values.mysql.limits.defaultRequest.cpu }}
-        memory: {{ .Values.mysql.limits.defaultRequest.memory }}
+  - type: {{ .Values.mysql.limits.type | default "Container" }}
+    default:
+      cpu: {{ .Values.mysql.limits.defaultCpu | default "500m" }}
+      memory: {{ .Values.mysql.limits.defaultMemory | default "512Mi" }}
+{{- end }}
+
