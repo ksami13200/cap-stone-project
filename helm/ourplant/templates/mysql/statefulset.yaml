@@ -1,19 +1,20 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Release.Name }}-db
+  name: {{ .Release.Name }}
   labels:
-    app: {{ .Release.Name }}-db
+    app: {{ .Release.Name }}
+  namespace: {{ .Values.mysql.namespace }}
 spec:
-  serviceName: {{ .Release.Name }}-db
+  serviceName: {{ .Release.Name }}
   replicas: {{ .Values.mysql.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-db
+      app: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-db
+        app: {{ .Release.Name }}
     spec:
       containers:
         - name: db
