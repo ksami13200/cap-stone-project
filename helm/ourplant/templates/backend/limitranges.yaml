@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  limits:
+    - type: {{ .Values.limits.type }}
+      default:
+        cpu: {{ .Values.limits.default.cpu }}
+        memory: {{ .Values.limits.default.memory }}
+      defaultRequest:
+        cpu: {{ .Values.limits.defaultRequest.cpu }}
+        memory: {{ .Values.limits.defaultRequest.memory }}
