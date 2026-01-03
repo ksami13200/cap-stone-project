@@ -1,0 +1,105 @@
+namespace: dev
+
+global:
+  domain: ourplant.local
+
+################################
+# Backend
+################################
+backend:
+  image:
+    repository: abdlerazek/ourplant-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  replicaCount: 1
+
+  service:
+    type: ClusterIP
+    port: 5000
+
+  env:
+    mysqlHost: db
+    mysqlUser: root
+    mysqlPassword: root
+    mysqlDb: ourplant_db
+
+  limits:
+    type: Container
+    default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 250m
+      memory: 256Mi
+
+################################
+# Frontend
+################################
+frontend:
+  image:
+    repository: abdlerazek/ourplant-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  replicaCount: 1
+
+  service:
+    type: NodePort
+    port: 80
+    nodePort: 30080   # ⚠️ لو حصل conflict غيره
+
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+  limits:
+    type: Container
+    default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 200m
+      memory: 256Mi
+
+################################
+# Ingress
+################################
+ingress:
+  enabled: true
+  className: nginx
+  path: /
+  pathType: Prefix
+
+################################
+# MySQL
+################################
+mysql:
+  image:
+    repository: abdlerazek/ourplant-db
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  replicaCount: 1
+
+  service:
+    type: ClusterIP
+    port: 3306
+
+  env:
+    mysqlRootPassword: root
+    mysqlDatabase: ourplant_db
+
+  persistence:
+    size: 200Mi
+
+  limits:
+    type: Container
+    default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 200m
+      memory: 256Mi
