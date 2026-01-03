@@ -7,7 +7,6 @@ frontend:
     pullPolicy: Always
     tag: a77915dedb9c714e7926860ef64d00ce3225964b
 
-
   service:
     type: NodePort
     port: 80
@@ -19,9 +18,6 @@ backend:
     repository: abdlerazek/ourplant-backend
     tag: a77915dedb9c714e7926860ef64d00ce3225964b
     pullPolicy: Always
-
-
-
   service:
     type: ClusterIP
     port: 5000
@@ -37,7 +33,6 @@ mysql:
     repository: abdlerazek/ourplant-db
     tag: a77915dedb9c714e7926860ef64d00ce3225964b
     pullPolicy: Always
-
   service:
     type: ClusterIP
     port: 3306
