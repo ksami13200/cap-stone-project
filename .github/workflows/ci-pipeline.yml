@@ -105,12 +105,12 @@ jobs:
 
     - name: Update Helm tag
       run: |
-        sed -i "s|tag:.*|tag: ${GITHUB_SHA}|g" helm/ourplant/values.yaml
+        sed -i "s|tag:.*|tag: ${GITHUB_SHA}|g" helm/ourplant/templates/values.yaml
     - name: Commit changes (if any)
       run: |
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
-        git add helm/ourplant/values.yaml
+        git add helm/ourplant/templates/values.yaml
         if git diff --cached --quiet; then
           echo "No changes to commit"
           exit 0
