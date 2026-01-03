@@ -1,0 +1,32 @@
+frontend:
+  image:
+    repository: abdlerazek/ourplant-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 80
+    nodePort: 30080
+  replicaCount: 1
+
+  limits:
+    type: Container
+    default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 200m
+      memory: 256Mi
+global:
+  domain: ourplant.local
+ingress:
+  enabled: true
+  className: nginx
+  path: /
+  pathType: Prefix
+backend:
+  service:
+    type: ClusterIP
+    port: 5000
+namespace: dev
