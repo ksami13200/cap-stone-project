@@ -47,7 +47,7 @@ frontend:
   service:
     type: NodePort
     port: 80
-    nodePort: 30080   # ⚠️ لو حصل conflict غيره
+    nodePort: 30081 # ⚠️ لو حصل conflict غيره
 
   hpa:
     enabled: true
