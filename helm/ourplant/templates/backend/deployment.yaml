@@ -1,18 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-backend
+  name: {{ .Release.Name }}
   labels:
-    app: {{ .Release.Name }}-backend
+    app: {{ .Release.Name }}
+  namespace: {{ .Values.namespace }}
 spec:
   replicas: {{ .Values.backend.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-backend
+      app: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-backend
+        app: {{ .Release.Name }}
     spec:
       containers:
         - name: backend
@@ -22,7 +23,7 @@ spec:
             - containerPort: {{ .Values.backend.service.port }}
           env:
             - name: MYSQL_HOST
-              value: {{ .Release.Name }}-db
+              value: {{ .Release.Name }}
             - name: MYSQL_USER
               value: {{ .Values.backend.env.mysqlUser | quote }}
             - name: MYSQL_PASSWORD
