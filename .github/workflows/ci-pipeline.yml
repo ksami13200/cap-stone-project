@@ -2,9 +2,9 @@ name: ci-pipeline
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ dev, testing, main ]
   pull_request:
-    branches: [ "dev" ]
+    branches: [ dev, testing, main ]
 
 jobs:
 # ---------- Code Quality ----------
