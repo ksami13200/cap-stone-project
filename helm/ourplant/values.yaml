@@ -1,0 +1,51 @@
+global:
+  domain: ourplant.local
+
+frontend:
+  image:
+    repository: abdlerazek/ourplant-frontend
+    pullPolicy: Always
+    tag: ed8d64426526ae1dfef33e38c97103ae0bcc6b2c
+
+  service:
+    type: NodePort
+    port: 80
+    nodePort: 30080
+  replicaCount: 1
+
+backend:
+  image:
+    repository: abdlerazek/ourplant-backend
+    tag: ed8d64426526ae1dfef33e38c97103ae0bcc6b2c
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 5000
+  replicaCount: 1
+  env:
+    mysqlHost: db
+    mysqlUser: root
+    mysqlPassword: root
+    mysqlDb: ourplant_db
+
+mysql:
+  image:
+    repository: abdlerazek/ourplant-db
+    tag: ed8d64426526ae1dfef33e38c97103ae0bcc6b2c
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 3306
+  replicaCount: 1
+  env:
+    mysqlRootPassword: root
+    mysqlDatabase: ourplant_db
+  persistence:
+    size: 200Mi
+
+
+ingress:
+  enabled: true
+  className: nginx
+  path: /
+  pathType: Prefix

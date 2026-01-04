@@ -43,3 +43,8 @@ CREATE TABLE IF NOT EXISTS subscribers (
     email VARCHAR(100) NOT NULL UNIQUE,
     subscribed_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+INSERT INTO products (name,description,price,image_url,stock) VALUES("sensevria","indoor plant",250," https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRQsCnIDLePs7GtZsp6jM7DsSL8ZAx-xu47Og&s", 25); 
+
+INSERT INTO products (name,description,price,image_url,stock) VALUES("PHILODENDRON","indoor plant",500,"https://cdn.makemygarden.com/uploads/2021/09/198.jpg
+", 25);
