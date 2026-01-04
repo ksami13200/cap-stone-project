@@ -119,5 +119,5 @@ jobs:
         git commit -m "ci: update image tag to ${GITHUB_SHA}"
     - name: Pull latest & push
       run: |
-        git pull --rebase origin dev
-        git push origin dev
+        git pull --rebase origin main
+        git push origin main
